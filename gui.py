@@ -78,15 +78,15 @@ class Mainlayout(BoxLayout):
         elif instance.text == ImageType.MORPHOLOGY.name:
             self.image_layout.update_image(create_texture(self.images[ImageType.MORPHOLOGY])) 
  
-class ExampleApp(App):
-    def __init__(self, **kwargs):
-        super(ExampleApp,self).__init__(**kwargs)  
-        self._image_collector=Image_collector()
+class SimpleGUIApp(App):
+    def __init__(self, filename, **kwargs):
+        super(SimpleGUIApp,self).__init__(**kwargs)  
+        self._image_collector=Image_collector(filename)
     
     def build(self):
         mainPanel = Mainlayout(images=self._image_collector.images, orientation='horizontal') 
         return mainPanel
 
 if __name__=="__main__":  
-    ExampleApp().run()
+    SimpleGUIApp().run()
     
