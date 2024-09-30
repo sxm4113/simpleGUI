@@ -10,6 +10,7 @@ import cv2
 import numpy as np
 
 from image_collector import Image_collector
+from simpleGUI_emum import ImageType
 
 def create_texture(data): 
     texture = Texture.create(size=(data.shape[1], data.shape[0]), colorfmt='luminance')
@@ -51,14 +52,14 @@ class Mainlayout(BoxLayout):
         
         # Image layout
         self.image_layout = Imagelayout(size_hint=(1.0, 1.0) ) 
-        self.image_layout.update_image(create_texture(self.images['Original']))
+        self.image_layout.update_image(create_texture(self.images[ImageType.ORIGINAL]))
        
         # Button layout
         button_layout = ButtonLayout(size_hint=(None,None), orientation='vertical', 
-                    width = 130, height = 120, pos_hint={'x':0.8,'y':0.7})
+                    width = 160, height = 140, pos_hint={'x':0.8,'y':0.7})
         
         for k, _ in self.images.items():
-            buttons.append(Button (text=k)) 
+            buttons.append(Button (text=k.name)) 
 
         for button in buttons:
             button.bind(on_press=self.on_button_press)
@@ -68,14 +69,14 @@ class Mainlayout(BoxLayout):
         self.add_widget(button_layout)
   
     def on_button_press(self, instance):
-        if instance.text == 'Original': 
-            self.image_layout.update_image(create_texture(self.images['Original']))
+        if instance.text == ImageType.ORIGINAL.name: 
+            self.image_layout.update_image(create_texture(self.images[ImageType.ORIGINAL]))
            
-        elif instance.text == 'Pyramid':
-            self.image_layout.update_image(create_texture(self.images['Pyramid'])) 
+        elif instance.text == ImageType.PYRAMID.name:
+            self.image_layout.update_image(create_texture(self.images[ImageType.PYRAMID])) 
             
-        elif instance.text == 'Morphology':
-            self.image_layout.update_image(create_texture(self.images['Morphology'])) 
+        elif instance.text == ImageType.MORPHOLOGY.name:
+            self.image_layout.update_image(create_texture(self.images[ImageType.MORPHOLOGY])) 
  
 class ExampleApp(App):
     def __init__(self, **kwargs):

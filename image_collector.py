@@ -1,8 +1,10 @@
 import os
 import cv2
+
 from image_pyramid import Pyramid
 from multiscale_morphology import Morphology
- 
+from simpleGUI_emum import ImageType 
+
 class Image_collector:
     def __init__(self):
         image_file = os.path.join(os.path.dirname(__file__), 'images', 'original_image.jpg')
@@ -20,7 +22,7 @@ class Image_collector:
         
         pyramid_image = cv2.resize(pyramid_image, (960, 768), interpolation = cv2.INTER_LINEAR)
         morphology_image = cv2.resize(morphology_image, (960, 768), interpolation = cv2.INTER_LINEAR)
-        self.images={'Original': self.original,
-            'Pyramid': pyramid_image , 
-            'Morphology': morphology_image}
+        self.images={ImageType.ORIGINAL: self.original,
+            ImageType.PYRAMID: pyramid_image , 
+            ImageType.MORPHOLOGY: morphology_image}
     
