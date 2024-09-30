@@ -1,2 +1,2 @@
-call activate C:\Users\angel\Documents\pythonEnv\env
+call activate C:\pythonEnv\myenv
 python cli.py --windowed -- --image_file=images/original_image.jpg
