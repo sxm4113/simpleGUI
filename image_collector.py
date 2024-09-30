@@ -3,7 +3,7 @@ import cv2
 
 from image_pyramid import Pyramid
 from multiscale_morphology import Morphology
-from simpleGUI_emum import ImageType 
+from simpleGUI_emum import ImageType
 
 class Image_collector:
     def __init__(self, filename):
@@ -13,12 +13,11 @@ class Image_collector:
         self.images = {}
 
         self.results()
-    
+
     def results(self):
-        pyramid_image = self.p.run_algorithm()  
+        pyramid_image = self.p.run_algorithm()
         morphology_image = self.m.run_algorithm()
-        
+
         self.images={ImageType.ORIGINAL: self.original,
-            ImageType.PYRAMID: pyramid_image , 
+            ImageType.PYRAMID: pyramid_image ,
             ImageType.MORPHOLOGY: morphology_image}
-    
