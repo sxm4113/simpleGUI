@@ -1,6 +1,8 @@
 import os
 import cv2
 import numpy as np
+import copy
+from scipy.ndimage import minimum_filter, maximum_filter
 
 from exceptions import ImageNotFound
 
@@ -45,22 +47,19 @@ class Pyramid:
         return output
 
     def adjust(self, rolp):
-        height, width = self.image.shape[:2]
 
         output = np.zeros_like(self.image,np.float32)
-        ##remove loop
-        for i in range (0,height):
-            for j in range (0,width):
-                if (i > 1 and i < height - 1 and j > 1 and j < width):
 
-                    if rolp[i,j] < 1:
-                        CE_EXP = np.min(self.image[i-1:i+1, j-1:j+1])
-                    else:
-                        CE_EXP = np.max(self.image[i-1:i+1, j-1:j+1])
-                else:
-                    CE_EXP = self.image[i,j]
-                final_value = CE_EXP * 3.0 * rolp[i,j]
-                output[i,j] = final_value
+        min_filtered = minimum_filter(rolp, size=(3,3), mode='constant')
+        max_filtered = maximum_filter(rolp, size=(3,3), mode='constant'
+                                      )
+        min_mask = rolp < 1.0
+        output = np.where(min_mask, min_filtered, self.image)
+
+        max_mask = rolp > 1.0
+        output = np.where(max_mask, max_filtered, self.image)
+
+        output = output * 3.0 * rolp
         return output
 
     def run_algorithm(self):
