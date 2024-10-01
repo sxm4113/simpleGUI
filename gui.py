@@ -8,8 +8,7 @@ from kivy.graphics.texture import Texture
 from kivy.core.window import Window
 import cv2
 import numpy as np
-
-from image_collector import Image_collector
+ 
 from simpleGUI_emum import ImageType
 
 def create_texture(data):
@@ -79,12 +78,12 @@ class Mainlayout(BoxLayout):
             self.image_layout.update_image(create_texture(self.images[ImageType.MORPHOLOGY]))
 
 class SimpleGUIApp(App):
-    def __init__(self, filename, **kwargs):
+    def __init__(self, images, **kwargs):
         super(SimpleGUIApp,self).__init__(**kwargs)
-        self._image_collector=Image_collector(filename)
+        self.images = images
 
     def build(self):
-        mainPanel = Mainlayout(images=self._image_collector.images, orientation='horizontal')
+        mainPanel = Mainlayout(images=self.images, orientation='horizontal')
         return mainPanel
 
 if __name__=="__main__":
