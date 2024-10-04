@@ -3,7 +3,7 @@ from kivy.uix.widget import Widget
 from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.image import Image
-from kivy.graphics import Line, Color, Rectangle
+from kivy.graphics import Color, Rectangle
 from kivy.graphics.texture import Texture
 from kivy.core.window import Window
 import cv2
@@ -26,8 +26,6 @@ class Imagelayout(Widget):
         init_image = create_texture(np.ones((600,500)))
         with self.canvas.before:
             self.rect = Rectangle(texture = init_image, size=init_image.size, pos=self.pos)
-            # Color(0.7, 0.7, 0.7, 1)
-            # self.border = Line(rectangle=(self.x, self.y, self.width, self.height), width=8)
 
         self.bind(pos=self.update_rect, size=self.update_rect)
         self.rect.texture = create_texture(self.images[ImageType.ORIGINAL])
