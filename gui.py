@@ -5,10 +5,10 @@ from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivy.graphics import Line, Color, Rectangle
 from kivy.graphics.texture import Texture
-from kivy.core.window import Window 
+from kivy.core.window import Window
 import cv2
 import numpy as np
- 
+
 from simpleGUI_emum import ImageType
 
 def create_texture(data):
@@ -24,10 +24,10 @@ class Imagelayout(Widget):
         self.padding=10
 
         init_image = create_texture(np.ones((600,500)))
-        with self.canvas.before: 
+        with self.canvas.before:
             self.rect = Rectangle(texture = init_image, size=init_image.size, pos=self.pos)
-            Color(0.7, 0.7, 0.7, 1)
-            self.border = Line(rectangle=(self.x, self.y, self.width, self.height), width=8)
+            # Color(0.7, 0.7, 0.7, 1)
+            # self.border = Line(rectangle=(self.x, self.y, self.width, self.height), width=8)
 
         self.bind(pos=self.update_rect, size=self.update_rect)
         self.rect.texture = create_texture(self.images[ImageType.ORIGINAL])
@@ -39,22 +39,22 @@ class Imagelayout(Widget):
     def update_rect(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
-        self.border.rectangle = (self.x, self.y, self.width, self.height)
-        
+        # self.border.rectangle = (self.x, self.y, self.width, self.height)
+
 class ButtonLayoutBox(BoxLayout):
     def __init__(self, image_layout, **kwargs):
         super(ButtonLayoutBox,self).__init__(**kwargs)
-        buttons=[]  
+        buttons=[]
         self.image_layout= image_layout
 
         with self.canvas.before:
-            Color(0.4, 0.4, 0.4, 1)  
+            Color(0.4, 0.4, 0.4, 1)
             self.rect = Rectangle()
         self.bind(pos=self.update_rect, size=self.update_rect)
-        
+
         button_layout = ButtonLayout(size_hint=(None,None), orientation='vertical',
                     width = 150, height = 200, pos_hint={'x':0.8,'y':0.6})
-        
+
         for k, _ in self.image_layout.images.items():
             buttons.append(Button (text=k.name))
 
@@ -87,13 +87,13 @@ class ButtonLayout(BoxLayout):
 class Mainlayout(BoxLayout):
     def __init__(self,images, **kwargs):
         super(Mainlayout,self).__init__(**kwargs)
-          
+
         # Image layout
-        image_layoutBox=Imagelayout(images) 
-        
+        image_layoutBox=Imagelayout(images)
+
         # Button layout
         button_layout_box = ButtonLayoutBox(image_layoutBox, size_hint=(None,1),width=150)
-  
+
         self.add_widget(image_layoutBox)
         self.add_widget(button_layout_box)
 
