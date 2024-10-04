@@ -2,17 +2,15 @@ import sys
 import os.path
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
+
 from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.widget import Widget
 
-
 from gui import Mainlayout
 from image_collector import Image_collector
-
-
 
 class Topbutton(BoxLayout):
     def __init__(self, **kwargs):
@@ -32,7 +30,6 @@ class FirstScreen(Screen):
         layout = BoxLayout(orientation='vertical')
         b = Topbutton(size_hint=(1.0,0.1))
         button = Button(text="Go to Second Screen")
-        imagelayout = BoxLayout(orientation='vertical')
         button.bind(on_press=self.switch_to_second)
         m = Mainlayout(images)
         layout.add_widget(b)
