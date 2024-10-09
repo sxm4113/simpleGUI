@@ -9,7 +9,7 @@ from kivy.core.window import Window
 import cv2
 import numpy as np
 
-from simpleGUI_emum import ImageType
+from simpleGUI_emum import ImageType, ProcessingType
 
 def create_texture(data):
     texture = Texture.create(size=(data.shape[1], data.shape[0]), colorfmt='luminance')
@@ -20,7 +20,6 @@ def create_texture(data):
 class Imagelayout(Widget):
     def __init__(self, images, **kwargs):
         super(Imagelayout,self).__init__(**kwargs)
-        self.images = images
         self.padding=10
 
         init_image = create_texture(np.ones((600,500)))
@@ -28,7 +27,7 @@ class Imagelayout(Widget):
             self.rect = Rectangle(texture = init_image, size=init_image.size, pos=self.pos)
 
         self.bind(pos=self.update_rect, size=self.update_rect)
-        self.rect.texture = create_texture(self.images[ImageType.ORIGINAL])
+        self.rect.texture = create_texture(images[ImageType.ORIGINAL])
 
     def update_image(self, img):
        self.canvas.clear()
@@ -40,9 +39,10 @@ class Imagelayout(Widget):
         # self.border.rectangle = (self.x, self.y, self.width, self.height)
 
 class ButtonLayoutBox(BoxLayout):
-    def __init__(self, image_layout, **kwargs):
+    def __init__(self, image_layout, images, **kwargs):
         super(ButtonLayoutBox,self).__init__(**kwargs)
         buttons=[]
+        self.images = images
         self.image_layout= image_layout
 
         with self.canvas.before:
@@ -53,7 +53,7 @@ class ButtonLayoutBox(BoxLayout):
         button_layout = ButtonLayout(size_hint=(None,None), orientation='vertical',
                     width = 150, height = 200, pos_hint={'x':0.8,'y':0.6})
 
-        for k, _ in self.image_layout.images.items():
+        for k, _ in self.images.items():
             buttons.append(Button (text=k.name))
 
         for button in buttons:
@@ -68,13 +68,13 @@ class ButtonLayoutBox(BoxLayout):
 
     def on_button_press(self, instance):
         if instance.text == ImageType.ORIGINAL.name:
-            self.image_layout.update_image(create_texture(self.image_layout.images[ImageType.ORIGINAL]))
+            self.image_layout.update_image(create_texture(self.images[ImageType.ORIGINAL]))
 
         elif instance.text == ImageType.PYRAMID.name:
-            self.image_layout.update_image(create_texture(self.image_layout.images[ImageType.PYRAMID]))
+            self.image_layout.update_image(create_texture(self.images[ImageType.PYRAMID]))
 
         elif instance.text == ImageType.MORPHOLOGY.name:
-            self.image_layout.update_image(create_texture(self.image_layout.images[ImageType.MORPHOLOGY]))
+            self.image_layout.update_image(create_texture(self.images[ImageType.MORPHOLOGY]))
 
 class ButtonLayout(BoxLayout):
     def __init__(self, **kwargs):
@@ -87,10 +87,12 @@ class Mainlayout(BoxLayout):
         super(Mainlayout,self).__init__(**kwargs)
 
         # Image layout
-        image_layoutBox=Imagelayout(images)
+        image_layoutBox=Imagelayout(images[ProcessingType.CONTRAST_ENHANCEMENT])
 
         # Button layout
-        button_layout_box = ButtonLayoutBox(image_layoutBox, size_hint=(None,1),width=150)
+        button_layout_box = ButtonLayoutBox(image_layoutBox,
+                                            images[ProcessingType.CONTRAST_ENHANCEMENT],
+                                            size_hint=(None,1),width=150)
 
         self.add_widget(image_layoutBox)
         self.add_widget(button_layout_box)

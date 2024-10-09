@@ -2,9 +2,9 @@ import torch
 from torch import nn
 from torchvision import datasets,transforms,models
 from torch.utils.data import Dataset, DataLoader, random_split
-from torchvision.io import read_image 
- 
-import cv2 
+from torchvision.io import read_image
+
+import cv2
 from PIL import Image
 
 pretrained_model = models.vit_b_16(weights=models.ViT_B_16_Weights.DEFAULT)
@@ -42,25 +42,25 @@ class MyTransferLearningModel(torch.nn.Module):
 
 import os
 from torchvision.io import read_image
- 
-PATH_old= "C:/Users/sangy/Documents/pythonCode/model/state_dict_model_10_7.pt"
+
+PATH_old= "C:/Users/angel/Documents/ML_models/state_dict_model.pt"
 base_model = models.vit_b_16(weights=models.ViT_B_16_Weights.DEFAULT)
 feature_extractor = False
 model_inference = MyTransferLearningModel(base_model, feature_extractor).to(DEVICE)
 model_inference.load_state_dict(torch.load(PATH_old, weights_only=True))
 model_inference.eval()
- 
+
 TRANSFORM = transforms.Compose([
     transforms.ToPILImage(),
     transforms.Resize((224, 224)),
     transforms.ToTensor()
 ])
 
-filename=r'C:\Users\sangy\Documents\images\tomato_leaf\test\images\IMG_0219_JPG.rf.c8d288f364390a28656a50ed7415713a.jpg'
-img = cv2.imread(filename) 
+filename=r'C:\Users\angel\Documents\git_folder\simpleGUI\images\classification\images\IMG_0219.jpg'
+img = cv2.imread(filename)
 image2=TRANSFORM(img).to(DEVICE).unsqueeze(dim=0)
-  
+
 outputs = model_inference(image2)
 _, preds = torch.max(outputs, 1)  # find prediction
- 
+
 print('preds => ', preds)
