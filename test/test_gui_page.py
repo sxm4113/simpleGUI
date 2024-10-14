@@ -8,33 +8,20 @@ from kivy.uix.button import Button
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.widget import Widget
+from kivy.uix.label import Label
 
-from gui import Mainlayout
+from page_contrast_enhancement import ContrastEnhancementLayout
 from image_collector import Image_collector
-
-class Topbutton(BoxLayout):
-    def __init__(self, **kwargs):
-        super(Topbutton, self).__init__(**kwargs)
-        buttonlayout = BoxLayout(orientation='horizontal')
-
-        button1 = Button(text="Go to First Screen", size_hint=(0.5,None))
-        button2 = Button(text="Go to Second Screen", size_hint=(0.5,None))
-        buttonlayout.add_widget(button1)
-        buttonlayout.add_widget(button2)
-        self.add_widget(buttonlayout)
-                        #, size_hint=(None,0.1), width = 400)
+from simpleGUI_emum import ProcessingType
 
 class FirstScreen(Screen):
     def __init__(self, images, **kwargs):
         super(FirstScreen, self).__init__(**kwargs)
         layout = BoxLayout(orientation='vertical')
-        b = Topbutton(size_hint=(1.0,0.1))
-        button = Button(text="Go to Second Screen")
-        button.bind(on_press=self.switch_to_second)
-        m = Mainlayout(images)
-        layout.add_widget(b)
-        layout.add_widget(m)
-        self.add_widget(layout)
+ 
+        l = Label(text="1st screen")
+ 
+        self.add_widget(l)
 
     def switch_to_second(self, instance):
         self.manager.current = 'second'
@@ -42,29 +29,51 @@ class FirstScreen(Screen):
 class SecondScreen(Screen):
     def __init__(self, images, **kwargs):
         super(SecondScreen, self).__init__(**kwargs)
+
         layout = BoxLayout(orientation='vertical')
-        b = Topbutton(size_hint=(1.0,0.1))
-        button1 = Button(text="Go to First Screen")
-        button1.bind(on_press=self.switch_to_first)
-        m = Mainlayout(images)
-        layout.add_widget(b)
-        layout.add_widget(m)
+        mainPanel = ContrastEnhancementLayout(orientation='horizontal')
+        mainPanel.add_image(images)
+   
+        self.add_widget(mainPanel)
+ 
 
-        self.add_widget(layout)
+class PageButtonPanel(BoxLayout):
+    def __init__(self, images, **kwargs):
+        super(PageButtonPanel, self).__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+                
+        buttonlayout = BoxLayout(orientation='horizontal',size_hint=(1,None),height=40  )
+        button1 = Button(text=ProcessingType.CONTRAST_ENHANCEMENT.name)
+        button2 = Button(text=ProcessingType.CLASSIFICATION.name)
+        
+        button1.bind(on_press=self.switch_to_second)
+        button2.bind(on_press=self.switch_to_second)
+        
+        buttonlayout.add_widget(button1)
+        buttonlayout.add_widget(button2)
 
-    def switch_to_first(self, instance):
-        self.manager.current = 'first'
+        layout.add_widget(buttonlayout)
+
+        self.sm = ScreenManager()
+        self.sm.add_widget(FirstScreen(name=ProcessingType.CONTRAST_ENHANCEMENT.name, images = images))
+        self.sm.add_widget(SecondScreen(name=ProcessingType.CLASSIFICATION.name, images = images))
+         
+        layout.add_widget(self.sm)
+
+        self.add_widget(layout) 
+    def switch_to_second(self, instance): 
+        if instance.text == ProcessingType.CONTRAST_ENHANCEMENT.name:
+            self.sm.current = ProcessingType.CLASSIFICATION.name
+        elif instance.text == ProcessingType.CLASSIFICATION.name:
+            self.sm.current = ProcessingType.CONTRAST_ENHANCEMENT.name
 
 class MyApp(App):
     def build(self):
         filename = r'images/original_image.jpg'
         self._image_collector=Image_collector(filename)
         images = self._image_collector.images
-
-        sm = ScreenManager()
-        sm.add_widget(FirstScreen(name='first', images = images))
-        sm.add_widget(SecondScreen(name='second', images = images))
-        return sm
+        pg=PageButtonPanel(images) 
+        return pg
 
 if __name__ == '__main__':
     MyApp().run()

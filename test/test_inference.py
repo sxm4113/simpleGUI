@@ -1,66 +1,27 @@
 import torch
-from torch import nn
-from torchvision import datasets,transforms,models
-from torch.utils.data import Dataset, DataLoader, random_split
-from torchvision.io import read_image
-
 import cv2
-from PIL import Image
+import util
 
-pretrained_model = models.vit_b_16(weights=models.ViT_B_16_Weights.DEFAULT)
+from model_classification import ClassificationModel ,InferenceClassification
 
 DEVICE = torch.device ("cuda") if torch.cuda.is_available() else torch.device("cpu")
 print (f"using Pytorch version: {torch.__version__}, Device: {DEVICE}")
 
 # print(pretrained_model)
 
-class MyTransferLearningModel(torch.nn.Module):
-
-    def __init__(self, pretrained_model, feature_extractor):
-
-        super().__init__()
-
-        if (feature_extractor):
-            for param in pretrained_model.parameters():
-                param.require_grad = False
-
-        # modify header
-        pretrained_model.heads = torch.nn.Sequential(
-            torch.nn.Linear(pretrained_model.heads[0].in_features, 128),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(0.5),
-            torch.nn.Linear(128, 7) # 7 type of tomato leaves
-        )
-
-        self.model = pretrained_model
-
-    def forward(self, data):
-
-        logits = self.model(data)
-
-        return logits
-
-import os
-from torchvision.io import read_image
-
-PATH_old= "C:/Users/angel/Documents/ML_models/state_dict_model.pt"
-base_model = models.vit_b_16(weights=models.ViT_B_16_Weights.DEFAULT)
-feature_extractor = False
-model_inference = MyTransferLearningModel(base_model, feature_extractor).to(DEVICE)
-model_inference.load_state_dict(torch.load(PATH_old, weights_only=True))
-model_inference.eval()
-
-TRANSFORM = transforms.Compose([
-    transforms.ToPILImage(),
-    transforms.Resize((224, 224)),
-    transforms.ToTensor()
-])
-
-filename=r'C:\Users\angel\Documents\git_folder\simpleGUI\images\classification\images\IMG_0219.jpg'
+  
+filename=r'C:\Users\sangy\Documents\git_folder\simpleGUI\images\classification\images\IMG_0219.jpg'
 img = cv2.imread(filename)
-image2=TRANSFORM(img).to(DEVICE).unsqueeze(dim=0)
+img=util.prepare_image_data(img)
+image2=img.to(DEVICE).unsqueeze(dim=0)
+# outputs = model_inference(image2)
+# _, preds = torch.max(outputs, 1)  # find prediction
 
-outputs = model_inference(image2)
-_, preds = torch.max(outputs, 1)  # find prediction
+classification = InferenceClassification()
+classification.initialize()
+classification.run_inference(image2)
 
-print('preds => ', preds)
+# outputs = model_inference(image2)
+# _, preds = torch.max(outputs, 1)  # find prediction
+
+# print('preds => ', preds)

@@ -52,7 +52,7 @@ class Morphology:
 
         sum_top_hat = 0.9 * top_hat3 + 0.7 * top_hat5 + 0.5 * top_hat3
         sum_black_hat = 0.9 * black_hat3 + 0.7 * black_hat5 + 0.5 * top_hat3
-        print ('run algorithm')
+ 
         final_image_floating =  self.image + sum_top_hat - sum_black_hat
         final_image = np.clip(final_image_floating, 0, 255)
         final_image = final_image.astype(np.uint8)

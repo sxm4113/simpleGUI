@@ -1,0 +1,2 @@
+
+        logits = self.model(data)

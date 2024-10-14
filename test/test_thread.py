@@ -13,6 +13,9 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.label import Label 
 import torch
+from threading import Thread
+import queue
+
 from simpleGUI_emum import ProcessingType, Classification_Label, Model_enum
 from util import create_color_texture, prepare_image_data
 from image_collector import Image_collector

@@ -1,18 +1,14 @@
-import sys
-import os.path
-sys.path.append(
-    os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
-import numpy as np 
-
-from kivy.app import App
-from kivy.uix.button import Button
+from kivy.app import App 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.graphics import Color, Rectangle
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.togglebutton import ToggleButton
+from kivy.uix.button import Button
 from kivy.uix.label import Label 
 import torch
+import numpy as np
+
 from simpleGUI_emum import ProcessingType, Classification_Label, Model_enum
 from util import create_color_texture, prepare_image_data
 from image_collector import Image_collector
@@ -114,43 +110,19 @@ class ClassificationLayout(BoxLayout):
     def __init__(self, images, **kwargs):
         super(ClassificationLayout, self).__init__(**kwargs)
         self.orientation='horizontal'
-
-        i = Imagelayout()
-
-        b = ButtonLayoutBox(i, images , size_hint=(None,1),width=150)
-        self.add_widget(i)
-        self.add_widget(b)
-
-class MyApp(App):
-    def build(self):
-  
         DEVICE = torch.device ("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-        filename = r'images/original_image.jpg'
-        _image_collector=Image_collector(filename)
-        imageset = _image_collector.images[ProcessingType.CLASSIFICATION]
-        
         classification = InferenceClassification()
         classification.initialize()
-
-        for k,v in imageset.items():
+        for k,v in images.items():
             img=prepare_image_data(v['image'])
             image=img.to(DEVICE).unsqueeze(dim=0)
             outputs = classification.run_inference(image) 
             label=Classification_Label(outputs.item()).name
             v.update({'result':label})
-             
-        mainlayout = ClassificationLayout(imageset)
-        return mainlayout
+              
+        i = Imagelayout()
 
-if __name__ == '__main__':
-
-    MyApp().run()
-
-
-# img=util.prepare_image_data(img)
-# image2=img.to(DEVICE).unsqueeze(dim=0)
- 
-# classification = InferenceClassification()
-# classification.initialize()
-# classification.run_inference(image2)
+        b = ButtonLayoutBox(i, images , size_hint=(None,1),width=150)
+        self.add_widget(i)
+        self.add_widget(b)

@@ -11,7 +11,7 @@ class Image_collector:
         self.p = Pyramid(filename)
         self.m = Morphology(filename)
         self.images = {ProcessingType.CONTRAST_ENHANCEMENT:None,
-                       ProcessingType.CLASSIFICATION:None}
+                       ProcessingType.CLASSIFICATION:{}}
 
         self.contrast_enhancement_results()
         self.classification_results()
@@ -27,10 +27,9 @@ class Image_collector:
                 }
 
     def classification_results(self):
-        image_folder = os.path.join(os.path.dirname(__file__), r'images\classification')
+        image_folder = os.path.join(os.path.dirname(__file__), r'images\classification\images')
         images = os.listdir(image_folder)
 
-
-        self.images[ProcessingType.CLASSIFICATION]={
-                "input_image":[cv2.imread(os.path.join(image_folder, image)) for image in images]
-            }
+        for idx, image in enumerate(images):
+            self.images[ProcessingType.CLASSIFICATION].update(
+                {str(idx):{'image':cv2.imread(os.path.join(image_folder, image))}})
