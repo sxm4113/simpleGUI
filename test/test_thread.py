@@ -13,6 +13,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.label import Label 
 import torch
+from kivy.clock import mainthread
 from threading import Thread
 import queue
 
@@ -20,6 +21,7 @@ from simpleGUI_emum import ProcessingType, Classification_Label, Model_enum
 from util import create_color_texture, prepare_image_data
 from image_collector import Image_collector
 from model_classification import InferenceClassification
+
 
 class Imagelayout(FloatLayout):
     def __init__(self, **kwargs):
@@ -41,34 +43,38 @@ class Imagelayout(FloatLayout):
         self.rect.size = self.size
 
 class ThumnailImage(GridLayout):
-    def __init__(self, imagelayout, images,**kwargs):
+    def __init__(self, imagelayout,**kwargs):
         super(ThumnailImage,self).__init__(**kwargs)
         self.cols = 2
         self.spacing=10
 
         self.imagelayout = imagelayout
-        self.buttons = {}
+        self.images=None
+        self.buttons = []
         self.clicked_button = None
 
-        for k,v in images.items():
-            btn_text = k
-            self.buttons.update({btn_text:
-                {"button":ToggleButton (text=btn_text),
-                 "image":v['image']
-                 }
-            })
-        for _, value in self.buttons.items():
-            value["button"].bind(on_press=self.on_button_press)
-            self.add_widget(value["button"])
+        for i in range(4):
+            btn_text = str(i)
+            self.buttons.append(ToggleButton (text=btn_text))
+
+        for button in self.buttons:
+            button.bind(on_press=self.on_button_press)
+            button.disabled = True
+            self.add_widget(button)
+
+    def add_image (self, images):
+        self.images = images
+        for button in self.buttons: 
+            button.disabled = False
 
     def on_button_press(self, instance):
-        for key, value in self.buttons.items():
-            if key is not instance.text:
-                value["button"].state = "normal"
+        for button in self.buttons:
+            if button.text is not instance.text:
+                button.state = "normal"
             else:
-                self.clicked_button = key
-                value["button"].state = "down"
-                self.imagelayout.rect.texture = create_color_texture(value["image"])
+                self.clicked_button = instance.text
+                button.state = "down"
+                self.imagelayout.rect.texture = create_color_texture(self.images[instance.text]['image'])
                 self.imagelayout.result_label.text = ""
 
 class ButtonLayout(BoxLayout):
@@ -77,28 +83,29 @@ class ButtonLayout(BoxLayout):
         self.spacing = 10
         self.padding= 10
 
-class ButtonLayoutBox(FloatLayout):
-    def __init__(self, imagelayout, images, **kwargs):
-        super(ButtonLayoutBox,self).__init__(**kwargs)
+class ButtonLayoutPanel(FloatLayout):
+    def __init__(self, imagelayout, **kwargs):
+        super(ButtonLayoutPanel,self).__init__(**kwargs)
 
-        self.images = images
+        self.images = None
         self.imagelayout = imagelayout
-        buttons=[]
+        self.buttons=[]
         with self.canvas.before:
             Color(0.4, 0.4, 0.4, 1)
             self.rect = Rectangle()
         self.bind(pos=self.update_rect, size=self.update_rect)
 
-        self.thumnail_image = ThumnailImage(self.imagelayout, images, size_hint=(None,None), width = 120, height = 150,
+        self.thumnail_image = ThumnailImage(self.imagelayout, size_hint=(None,None), width = 120, height = 150,
                            pos_hint={'x':0.1,'y':0.65})
         self.button_layout = ButtonLayout(size_hint=(None,None), orientation='vertical',
                     width = 150, height = 80*len(Model_enum), pos_hint={'x':0.01,'y':0.2})
 
         for k in Model_enum:
-            buttons.append(Button (text=k.name))
+            self.buttons.append(Button (text=k.name))
 
-        for button in buttons:
+        for button in self.buttons:
             button.bind(on_press=self.on_button_press)
+            button.disabled=True
             self.button_layout.add_widget(button)
 
         self.add_widget(self.thumnail_image)
@@ -108,52 +115,84 @@ class ButtonLayoutBox(FloatLayout):
         self.rect.pos = self.pos
         self.rect.size = self.size
 
+    def add_image (self, images):
+        self.images = images 
+        self.thumnail_image.add_image(images)
+        for button in self.buttons: 
+            button.disabled=False 
+
     def on_button_press(self, instance): 
         if instance.text == Model_enum.VisionTransformer.name: 
             clicked_key = self.thumnail_image.clicked_button
             self.imagelayout.result_label.text = self.images[clicked_key]['result']
 
 class ClassificationLayout(BoxLayout):
-    def __init__(self, images, **kwargs):
+    def __init__(self, **kwargs):
         super(ClassificationLayout, self).__init__(**kwargs)
         self.orientation='horizontal'
+        self.DEVICE = torch.device ("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-        i = Imagelayout()
+        self.classification = InferenceClassification()
+        self.classification.initialize()
+              
+        self.imageQueue = queue.Queue()
+        Thread(target=imageCollector, args=(self.imageQueue,)).start()
 
-        b = ButtonLayoutBox(i, images , size_hint=(None,1),width=150)
-        self.add_widget(i)
-        self.add_widget(b)
+        self.i = Imagelayout()
+        self.b = ButtonLayoutPanel(self.i , size_hint=(None,1),width=150)
+          
+        self.add_widget(self.i)
+        self.add_widget(self.b)
+        self.checkQueue()
+
+    def checkQueue(self): 
+        while True:
+            contents = self.imageQueue.get()
+            print ("queue filled")
+            imageset = contents.images[ProcessingType.CLASSIFICATION]
+            self.add_image(imageset)
+            break
+
+
+    def add_image(self, images:dict):
+
+        for k,v in images.items():
+            img=prepare_image_data(v['image'])
+            image=img.to(self.DEVICE).unsqueeze(dim=0)
+            outputs = self.classification.run_inference(image) 
+            label=Classification_Label(outputs.item()).name
+            v.update({'result':label})
+        
+        self.b.add_image(images)
 
 class MyApp(App):
     def build(self):
   
-        DEVICE = torch.device ("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        # DEVICE = torch.device ("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-        filename = r'images/original_image.jpg'
-        _image_collector=Image_collector(filename)
-        imageset = _image_collector.images[ProcessingType.CLASSIFICATION]
+        # filename = r'images/original_image.jpg'
+        # _image_collector=Image_collector(filename)
+        # imageset = _image_collector.images[ProcessingType.CLASSIFICATION]
+                     
+        self.mainPanel = ClassificationLayout()
+        return self.mainPanel
+
+    def add_image(self, imageset):
+        self.mainPanel.add_image (imageset)
+
         
-        classification = InferenceClassification()
-        classification.initialize()
 
-        for k,v in imageset.items():
-            img=prepare_image_data(v['image'])
-            image=img.to(DEVICE).unsqueeze(dim=0)
-            outputs = classification.run_inference(image) 
-            label=Classification_Label(outputs.item()).name
-            v.update({'result':label})
-             
-        mainlayout = ClassificationLayout(imageset)
-        return mainlayout
+def imageCollector(que):
+    print ("imageCollector func started")
+    filename = r'images/original_image.jpg'
+    image_collector=Image_collector(filename)
+    que.put(image_collector)
+    print ("imageCollector func ended")
 
+ 
+ 
 if __name__ == '__main__':
 
-    MyApp().run()
-
-
-# img=util.prepare_image_data(img)
-# image2=img.to(DEVICE).unsqueeze(dim=0)
- 
-# classification = InferenceClassification()
-# classification.initialize()
-# classification.run_inference(image2)
+    app=MyApp()
+    app.run()
+     

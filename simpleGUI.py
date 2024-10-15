@@ -15,8 +15,8 @@ class FirstScreen(Screen):
     def __init__(self, images, **kwargs):
         super(FirstScreen, self).__init__(**kwargs)
         
-        mainPanel = ClassificationLayout(images)
-
+        mainPanel = ClassificationLayout()
+        mainPanel.add_image(images)
         self.add_widget(mainPanel)
  
 class SecondScreen(Screen):
@@ -103,6 +103,4 @@ class SimpleGUI(SimpleGUIApp):
         for thread in self.threads:
             thread.join()
         print ("wait")
-        while True:
-            print ("wait")
-            pass    
+ 
