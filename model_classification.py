@@ -26,18 +26,20 @@ class ClassificationModel(torch.nn.Module):
         return logits
 
 class InferenceClassification:
-    def __init__(self):
+    def __init__(self, parameter_file):
         self.model = None
+        self.parameter_file = parameter_file
         self.device = torch.device ("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     def initialize(self):
         base_model = models.vit_b_16(weights=models.ViT_B_16_Weights.DEFAULT)
-        PATH_old= r"C:\model\state_dict_model_10_7.pt"
+        # PATH_old= r"C:\model\state_dict_model_10_7.pt"
+        path = self.parameter_file
         feature_extractor = False
         self.model = ClassificationModel(base_model, feature_extractor).to(self.device)
-        self.model.load_state_dict(torch.load(PATH_old, weights_only=True))
-        self.model.eval()
-    
+        self.model.load_state_dict(torch.load(path, weights_only=True))
+        self.model.eval() 
+        
     def run_inference(self, image: torch.Tensor):
         outputs = self.model(image)
         _, preds = torch.max(outputs, 1)  # find prediction 

@@ -1,7 +1,6 @@
 import os
 import cv2
-import numpy as np
-import copy
+import numpy as np 
 from scipy.ndimage import minimum_filter, maximum_filter
 
 from exceptions import ImageNotFound

@@ -16,6 +16,7 @@ import torch
 from kivy.clock import mainthread
 from threading import Thread
 import queue
+import time 
 
 from simpleGUI_emum import ProcessingType, Classification_Label, Model_enum
 from util import create_color_texture, prepare_image_data
@@ -134,16 +135,14 @@ class ClassificationLayout(BoxLayout):
 
         self.classification = InferenceClassification()
         self.classification.initialize()
-              
-        self.imageQueue = queue.Queue()
-        Thread(target=imageCollector, args=(self.imageQueue,)).start()
+
 
         self.i = Imagelayout()
         self.b = ButtonLayoutPanel(self.i , size_hint=(None,1),width=150)
           
         self.add_widget(self.i)
         self.add_widget(self.b)
-        self.checkQueue()
+        # self.checkQueue()
 
     def checkQueue(self): 
         while True:
@@ -167,32 +166,49 @@ class ClassificationLayout(BoxLayout):
 
 class MyApp(App):
     def build(self):
-  
-        # DEVICE = torch.device ("cuda") if torch.cuda.is_available() else torch.device("cpu")
-
-        # filename = r'images/original_image.jpg'
-        # _image_collector=Image_collector(filename)
-        # imageset = _image_collector.images[ProcessingType.CLASSIFICATION]
-                     
-        self.mainPanel = ClassificationLayout()
-        return self.mainPanel
+           
+        self.panel = ClassificationLayout()
+        return self.panel
 
     def add_image(self, imageset):
-        self.mainPanel.add_image (imageset)
-
         
+        self.panel.add_image (imageset)
 
-def imageCollector(que):
+def imageCollector(image_queue):
     print ("imageCollector func started")
     filename = r'images/original_image.jpg'
     image_collector=Image_collector(filename)
-    que.put(image_collector)
+    image_queue.put(image_collector)
     print ("imageCollector func ended")
 
  
- 
-if __name__ == '__main__':
+def external_function(app_instance, imageset):
+    # time.sleep(10)
+    app_instance.root.add_image(imageset)  # Simulating a background task
+    print("Background task completed.")
 
+if __name__ == '__main__':
+              
+    imageQueue = queue.Queue()
+ 
     app=MyApp()
-    app.run()
+    app_thread = Thread(target=app.run)
+    app_thread.start()
+
+    task_thread = Thread(target=imageCollector, args=(imageQueue,))
+    task_thread.start() 
      
+    
+    print ("all threads started")
+    while True: 
+        if app.root is not None:
+            contents = imageQueue.get()
+            
+            if contents is not None:        
+                print ("queue filled")
+                imageset = contents.images[ProcessingType.CLASSIFICATION]
+                app.root.add_image(imageset)
+                break
+    print ("task_thread", task_thread.is_alive())
+    print ("app_thread", app_thread.is_alive())
+    

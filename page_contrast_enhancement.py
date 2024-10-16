@@ -1,13 +1,11 @@
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.widget import Widget
-from kivy.uix.togglebutton import ToggleButton
-from kivy.uix.image import Image
+from kivy.uix.togglebutton import ToggleButton 
 from kivy.graphics import Color, Rectangle
 from kivy.graphics.texture import Texture  
 import numpy as np
 
-from simpleGUI_emum import ImageType
-from image_collector import Image_collector
+from simpleGUI_emum import ImageType 
 from util import create_texture
  
 class Imagelayout(Widget):
@@ -33,7 +31,7 @@ class ButtonLayoutBox(BoxLayout):
     def __init__(self, image_layout, **kwargs):
         super(ButtonLayoutBox,self).__init__(**kwargs)
         self.buttons=[]
-        self.images = {it:None for it in ImageType}
+        self.images = {}
         self.image_layout= image_layout
 
         with self.canvas.before:
@@ -49,6 +47,7 @@ class ButtonLayoutBox(BoxLayout):
 
         for button in self.buttons:
             button.bind(on_press=self.on_button_press)
+            button.disabled = True
             button_layout.add_widget(button)
 
         self.add_widget(button_layout)
@@ -64,7 +63,17 @@ class ButtonLayoutBox(BoxLayout):
             else: 
                 button.state = "down"
                 self.image_layout.update_image(create_texture(self.images[ImageType[button.text]]))
+    
+    def add_image(self, images):
+        self.images.update(images)
+        self.enable_button(images)
  
+    def enable_button(self, images):
+        for k, v in images.items(): 
+            for button in self.buttons: 
+                if (button.text == k.name):
+                    button.disabled = False
+
 class ButtonLayout(BoxLayout):
     def __init__(self, **kwargs):
         super(ButtonLayout,self).__init__(**kwargs)
@@ -83,9 +92,4 @@ class ContrastEnhancementLayout(BoxLayout):
         self.add_widget(image_layoutBox) 
         self.add_widget(self.button_layout_box)
 
-    def add_image(self, images):
-
-        self.button_layout_box.images = images
  
-if __name__=="__main__":
-    SimpleGUIApp().run()

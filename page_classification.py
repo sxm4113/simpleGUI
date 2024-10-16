@@ -1,17 +1,14 @@
-from kivy.app import App 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.graphics import Color, Rectangle
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.button import Button
-from kivy.uix.label import Label 
-import torch
+from kivy.uix.label import Label  
 import numpy as np
 
 from simpleGUI_emum import ProcessingType, Classification_Label, Model_enum
-from util import create_color_texture, prepare_image_data
-from image_collector import Image_collector
+from util import create_color_texture, prepare_image_data 
 from model_classification import InferenceClassification
 
 class Imagelayout(FloatLayout):
@@ -50,9 +47,13 @@ class ThumnailImage(GridLayout):
 
         for button in self.buttons:
             button.bind(on_press=self.on_button_press)
+            button.disabled = True
             self.add_widget(button)
+
     def add_image (self, images):
         self.images = images
+        for button in self.buttons: 
+            button.disabled = False
 
     def on_button_press(self, instance):
         for button in self.buttons:
@@ -76,11 +77,17 @@ class ButtonLayoutPanel(FloatLayout):
 
         self.images = None
         self.imagelayout = imagelayout
-        buttons=[]
+        self.buttons=[]
+
         with self.canvas.before:
             Color(0.4, 0.4, 0.4, 1)
             self.rect = Rectangle()
+
         self.bind(pos=self.update_rect, size=self.update_rect)
+ 
+        input_label = Label(text="Input Image", size_hint=(None,None), width = 100, height = 20,
+                                             pos_hint={'x':0.2,'y':0.9})
+        self.add_widget(input_label)
 
         self.thumnail_image = ThumnailImage(self.imagelayout, size_hint=(None,None), width = 120, height = 150,
                            pos_hint={'x':0.1,'y':0.65})
@@ -88,10 +95,11 @@ class ButtonLayoutPanel(FloatLayout):
                     width = 150, height = 80*len(Model_enum), pos_hint={'x':0.01,'y':0.2})
 
         for k in Model_enum:
-            buttons.append(Button (text=k.name))
+            self.buttons.append(Button (text=k.name))
 
-        for button in buttons:
+        for button in self.buttons:
             button.bind(on_press=self.on_button_press)
+            button.disabled=True
             self.button_layout.add_widget(button)
 
         self.add_widget(self.thumnail_image)
@@ -104,6 +112,8 @@ class ButtonLayoutPanel(FloatLayout):
     def add_image (self, images):
         self.images = images 
         self.thumnail_image.add_image(images)
+        for button in self.buttons: 
+            button.disabled=False 
 
     def on_button_press(self, instance): 
         if instance.text == Model_enum.VisionTransformer.name: 
@@ -114,25 +124,10 @@ class ClassificationLayout(BoxLayout):
     def __init__(self, **kwargs):
         super(ClassificationLayout, self).__init__(**kwargs)
         self.orientation='horizontal'
-        self.DEVICE = torch.device ("cuda") if torch.cuda.is_available() else torch.device("cpu")
-
-        self.classification = InferenceClassification()
-        self.classification.initialize()
-              
-        self.i = Imagelayout()
-        self.b = ButtonLayoutPanel(self.i , size_hint=(None,1),width=150)
- 
-        self.add_widget(self.i)
-        self.add_widget(self.b)
-
-
-    def add_image(self, images:dict):
-
-        for k,v in images.items():
-            img=prepare_image_data(v['image'])
-            image=img.to(self.DEVICE).unsqueeze(dim=0)
-            outputs = self.classification.run_inference(image) 
-            label=Classification_Label(outputs.item()).name
-            v.update({'result':label})
-        
-        self.b.add_image(images)
+  
+        self.image_layout = Imagelayout()
+        self.button_layout_panel = ButtonLayoutPanel(self.image_layout , size_hint=(None,1),width=150)
+          
+        self.add_widget(self.image_layout)
+        self.add_widget(self.button_layout_panel)
+  
